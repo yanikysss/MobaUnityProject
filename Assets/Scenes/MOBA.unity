@@ -285,7 +285,7 @@ GameObject:
   - component: {fileID: 355684672}
   m_Layer: 0
   m_Name: Red_Base
-  m_TagString: Untagged
+  m_TagString: RedBase
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -393,7 +393,7 @@ GameObject:
   - component: {fileID: 376888177}
   m_Layer: 0
   m_Name: 'Blue_Base '
-  m_TagString: Untagged
+  m_TagString: BlueBase
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -947,6 +947,8 @@ GameObject:
   - component: {fileID: 1004022125}
   - component: {fileID: 1004022124}
   - component: {fileID: 1004022129}
+  - component: {fileID: 1004022130}
+  - component: {fileID: 1004022131}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1086,6 +1088,38 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 10
   cameraTransform: {fileID: 330585546}
+--- !u!114 &1004022130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004022123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a1e2e9c4290af740bf721a144f018a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedMultiplier: 1.5
+  speedDuration: 3
+  speedCooldown: 5
+  healAmount: 30
+  baseHealRadius: 7
+  healCooldown: 10
+--- !u!114 &1004022131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1004022123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 569d966774002334b99401d294f01e9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 0
 --- !u!1 &1977484047
 GameObject:
   m_ObjectHideFlags: 0
