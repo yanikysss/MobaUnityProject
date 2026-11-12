@@ -30,8 +30,6 @@ public class PlayerAbilities : MonoBehaviour
     {
         movementScript = GetComponent<PlayerMovement>();
         healthScript = GetComponent<PlayerHealth>();
-
-        // Запоминаем изначальную скорость
         originalSpeed = movementScript.moveSpeed;
     }
 
@@ -48,19 +46,18 @@ public class PlayerAbilities : MonoBehaviour
         {
             lastAttackTime = Time.time;
 
-            // Ищем всех врагов в радиусе атаки
+            // Ищем всех в радиусе атаки
             Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
             bool hitSomething = false;
 
             foreach (var hitCollider in hitColliders)
             {
-                // Ищем скрипт CreepAI на объекте
+                // 1. Проверяем, не крип ли это
                 CreepAI creep = hitCollider.GetComponent<CreepAI>();
                 if (creep != null)
                 {
-                    // Поворачиваемся к крипу и бьем
                     Vector3 dir = (creep.transform.position - transform.position).normalized;
-                    dir.y = 0; // Чтобы игрок не наклонялся
+                    dir.y = 0;
                     transform.rotation = Quaternion.LookRotation(dir);
 
                     creep.TakeDamage(attackDamage);
@@ -68,11 +65,32 @@ public class PlayerAbilities : MonoBehaviour
                     hitSomething = true;
                     break; // Бьем только одного за клик
                 }
+
+                // 2. Проверяем, не красная ли это база
+                // Если у объекта есть тег RedBase и на нем висит скрипт BaseHealth
+                if (hitCollider.CompareTag("RedBase"))
+                {
+                    BaseHealth baseHealth = hitCollider.GetComponent<BaseHealth>();
+                    if (baseHealth != null)
+                    {
+                        Vector3 dir = (hitCollider.transform.position - transform.position).normalized;
+                        dir.y = 0;
+                        transform.rotation = Quaternion.LookRotation(dir);
+
+                        baseHealth.TakeDamage(attackDamage);
+                        Debug.Log("Игрок атакует КРАСНУЮ базу!");
+                        hitSomething = true;
+                        break;
+                    }
+                }
+
+                // 3. Если это синяя база (тег BlueBase), мы ничего не делаем. 
+                // Она просто игнорируется, и урон по ней не проходит.
             }
 
             if (!hitSomething)
             {
-                Debug.Log("Промах! Рядом нет врагов.");
+                Debug.Log("Промах! Рядом нет врагов или красной базы.");
             }
         }
     }
@@ -80,58 +98,45 @@ public class PlayerAbilities : MonoBehaviour
     // --- СПОСОБНОСТИ (E и R) ---
     private void HandleAbilities()
     {
-        // Ускорение (E)
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (Time.time >= lastSpeedBoostTime + speedCooldown && !isSpeedBoosted)
             {
                 ActivateSpeedBoost();
             }
-            else if (isSpeedBoosted)
-            {
-                Debug.Log("Ускорение уже активно!");
-            }
-            else
-            {
-                Debug.Log("Ускорение на кулдауне! Осталось: " + (speedCooldown - (Time.time - lastSpeedBoostTime)).ToString("F1") + " сек.");
-            }
+            else if (isSpeedBoosted) Debug.Log("Ускорение уже активно!");
+            else Debug.Log("Ускорение на кулдауне!");
         }
 
-        // Лечение у базы (R)
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (Time.time >= lastHealTime + healCooldown)
             {
                 TryHealAtBase();
             }
-            else
-            {
-                Debug.Log("Лечение на кулдауне! Осталось: " + (healCooldown - (Time.time - lastHealTime)).ToString("F1") + " сек.");
-            }
+            else Debug.Log("Лечение на кулдауне!");
         }
     }
 
     void ActivateSpeedBoost()
     {
-        lastSpeedBoostTime = Time.time; // Запускаем КД
+        lastSpeedBoostTime = Time.time;
         isSpeedBoosted = true;
         movementScript.moveSpeed = originalSpeed * speedMultiplier;
         Invoke(nameof(ResetSpeed), speedDuration);
-        Debug.Log("Способность E: Ускорение активировано!");
     }
 
     void ResetSpeed()
     {
         movementScript.moveSpeed = originalSpeed;
         isSpeedBoosted = false;
-        Debug.Log("Способность E: Ускорение закончилось.");
     }
 
     void TryHealAtBase()
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, baseHealRadius);
-
         bool nearBase = false;
+
         foreach (Collider col in colliders)
         {
             if (col.CompareTag("BlueBase"))
@@ -144,12 +149,12 @@ public class PlayerAbilities : MonoBehaviour
         if (nearBase && healthScript != null)
         {
             healthScript.Heal(healAmount);
-            lastHealTime = Time.time; // Запускаем КД только если лечение прошло успешно
-            Debug.Log("Способность R: Вылечен на базе на " + healAmount + " HP!");
+            lastHealTime = Time.time;
+            Debug.Log("Вылечен на базе!");
         }
         else if (!nearBase)
         {
-            Debug.Log("Способность R: Слишком далеко от синей базы!");
+            Debug.Log("Слишком далеко от синей базы!");
         }
     }
 }
