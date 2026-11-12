@@ -391,6 +391,7 @@ GameObject:
   - component: {fileID: 376888179}
   - component: {fileID: 376888178}
   - component: {fileID: 376888177}
+  - component: {fileID: 376888181}
   m_Layer: 0
   m_Name: 'Blue_Base '
   m_TagString: BlueBase
@@ -487,6 +488,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &376888181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 376888176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6083e42216a6c1d438deb16ecaf84c67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 120
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1106,6 +1120,9 @@ MonoBehaviour:
   healAmount: 30
   baseHealRadius: 7
   healCooldown: 10
+  attackDamage: 20
+  attackRange: 3
+  attackCooldown: 0.5
 --- !u!114 &1004022131
 MonoBehaviour:
   m_ObjectHideFlags: 0

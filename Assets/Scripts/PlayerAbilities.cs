@@ -20,6 +20,12 @@ public class PlayerAbilities : MonoBehaviour
     public float healCooldown = 8f;
     private float lastHealTime = -10f;
 
+    [Header("ЛКМ - Атака")]
+    public float attackDamage = 20f;
+    public float attackRange = 3f;
+    public float attackCooldown = 0.5f;
+    private float lastAttackTime = -10f;
+
     void Start()
     {
         movementScript = GetComponent<PlayerMovement>();
@@ -31,7 +37,50 @@ public class PlayerAbilities : MonoBehaviour
 
     void Update()
     {
-        // Способность 1: Ускорение (E)
+        HandleAttack();
+        HandleAbilities();
+    }
+
+    // --- АТАКА (ЛКМ) ---
+    private void HandleAttack()
+    {
+        if (Input.GetMouseButtonDown(0) && Time.time >= lastAttackTime + attackCooldown)
+        {
+            lastAttackTime = Time.time;
+
+            // Ищем всех врагов в радиусе атаки
+            Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
+            bool hitSomething = false;
+
+            foreach (var hitCollider in hitColliders)
+            {
+                // Ищем скрипт CreepAI на объекте
+                CreepAI creep = hitCollider.GetComponent<CreepAI>();
+                if (creep != null)
+                {
+                    // Поворачиваемся к крипу и бьем
+                    Vector3 dir = (creep.transform.position - transform.position).normalized;
+                    dir.y = 0; // Чтобы игрок не наклонялся
+                    transform.rotation = Quaternion.LookRotation(dir);
+
+                    creep.TakeDamage(attackDamage);
+                    Debug.Log("Игрок ударил крипа!");
+                    hitSomething = true;
+                    break; // Бьем только одного за клик
+                }
+            }
+
+            if (!hitSomething)
+            {
+                Debug.Log("Промах! Рядом нет врагов.");
+            }
+        }
+    }
+
+    // --- СПОСОБНОСТИ (E и R) ---
+    private void HandleAbilities()
+    {
+        // Ускорение (E)
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (Time.time >= lastSpeedBoostTime + speedCooldown && !isSpeedBoosted)
@@ -48,7 +97,7 @@ public class PlayerAbilities : MonoBehaviour
             }
         }
 
-        // Способность 2: Лечение у базы (R)
+        // Лечение у базы (R)
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (Time.time >= lastHealTime + healCooldown)
@@ -62,7 +111,6 @@ public class PlayerAbilities : MonoBehaviour
         }
     }
 
-    // --- ЛОГИКА УСКОРЕНИЯ ---
     void ActivateSpeedBoost()
     {
         lastSpeedBoostTime = Time.time; // Запускаем КД
@@ -79,16 +127,13 @@ public class PlayerAbilities : MonoBehaviour
         Debug.Log("Способность E: Ускорение закончилось.");
     }
 
-    // --- ЛОГИКА ЛЕЧЕНИЯ У БАЗЫ (Клавиша R) ---
     void TryHealAtBase()
     {
-        // Ищем все коллайдеры рядом с игроком в радиусе baseHealRadius
         Collider[] colliders = Physics.OverlapSphere(transform.position, baseHealRadius);
 
         bool nearBase = false;
         foreach (Collider col in colliders)
         {
-            // Проверяем, есть ли рядом объект с тегом BlueBase
             if (col.CompareTag("BlueBase"))
             {
                 nearBase = true;
