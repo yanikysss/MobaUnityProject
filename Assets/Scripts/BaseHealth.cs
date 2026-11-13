@@ -3,7 +3,11 @@ using UnityEngine;
 public class BaseHealth : MonoBehaviour
 {
     public float maxHealth = 500f;
-    private float currentHealth;
+    public float currentHealth; // Сделали public, чтобы UI мог читать
+
+    // Событие для UI
+    public System.Action onHealthChanged;
+
     private bool isDestroyed = false;
 
     void Start()
@@ -16,7 +20,9 @@ public class BaseHealth : MonoBehaviour
         if (isDestroyed) return;
 
         currentHealth -= amount;
-        Debug.Log("База получила урон! Осталось HP: " + currentHealth);
+        Debug.Log(gameObject.name + " получила урон! Осталось HP: " + currentHealth);
+
+        onHealthChanged?.Invoke(); // Вызываем событие
 
         if (currentHealth <= 0)
         {
@@ -27,8 +33,7 @@ public class BaseHealth : MonoBehaviour
     private void DestroyBase()
     {
         isDestroyed = true;
-        Debug.Log("База уничтожена! Игра окончена.");
-        // Тут потом добавим экран поражения
-        gameObject.SetActive(false); // Визуально скрываем базу
+        Debug.Log(gameObject.name + " уничтожена! Игра окончена.");
+        gameObject.SetActive(false);
     }
 }

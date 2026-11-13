@@ -2,23 +2,36 @@ using UnityEngine;
 
 public class CreepAI : MonoBehaviour
 {
-    [Header("Настройки")]
+    [Header("Движение и Атака")]
     public float moveSpeed = 3f;
     public float attackRange = 2f;
     public float attackDamage = 10f;
     public float attackCooldown = 1.5f;
     public float health = 50f;
 
+    [Header("Агр")]
+    public float aggroRange = 8f; // На каком расстоянии крип замечает игрока
+    public float deAggroRange = 12f; // На каком расстоянии крип забывает игрока
+
+    public static System.Action onCreepKilled;
+
     private Transform currentTarget;
+    private Transform defaultTarget; // Синяя база (цель по умолчанию)
     private float lastAttackTime = -10f;
     private float lastTargetSearchTime = 0f;
 
+    void Start()
+    {
+        // Находим синюю базу один раз при старте
+        GameObject blueBase = GameObject.FindGameObjectWithTag("BlueBase");
+        if (blueBase != null) defaultTarget = blueBase.transform;
+    }
+
     void Update()
     {
-        // Каждые 0.5 секунды ищем цель заново (вдруг игрок убежал или подошел ближе)
-        if (Time.time >= lastTargetSearchTime + 0.5f)
+        if (Time.time >= lastTargetSearchTime + 0.2f)
         {
-            FindTarget();
+            EvaluateTarget();
             lastTargetSearchTime = Time.time;
         }
 
@@ -30,11 +43,12 @@ public class CreepAI : MonoBehaviour
             if (distanceToTarget > attackRange)
             {
                 Vector3 direction = (currentTarget.position - transform.position).normalized;
-                direction.y = 0; // Чтобы не лететь по воздуху
+                direction.y = 0;
                 transform.position += direction * moveSpeed * Time.deltaTime;
 
-                // Поворачиваем крипа в сторону цели
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
+                // Поворот
+                if (direction != Vector3.zero)
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
             }
             // Если цель близко — атакуем
             else
@@ -48,34 +62,43 @@ public class CreepAI : MonoBehaviour
         }
     }
 
-    void FindTarget()
+    void EvaluateTarget()
     {
-        // 1. В ПРИОРИТЕТЕ ищем игрока (по тегу Player)
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
 
-        if (player != null && player.activeInHierarchy)
+        // 1. Проверяем игрока
+        if (playerObj != null && playerObj.activeInHierarchy)
         {
-            currentTarget = player.transform;
-            return;
+            float distanceToPlayer = Vector3.Distance(transform.position, playerObj.transform.position);
+
+            // Если игрок близко (в радиусе агра) — агримся на него
+            if (distanceToPlayer <= aggroRange)
+            {
+                currentTarget = playerObj.transform;
+                return;
+            }
+            // Если мы уже бежим за игроком, но он убежал слишком далеко — сбрасываем агр
+            else if (currentTarget == playerObj.transform && distanceToPlayer > deAggroRange)
+            {
+                currentTarget = defaultTarget; // Переключаемся обратно на базу
+                return;
+            }
         }
 
-        // 2. Если игрока нет (или он умер), ищем синюю базу (по тегу BlueBase)
-        GameObject blueBase = GameObject.FindGameObjectWithTag("BlueBase");
-        if (blueBase != null && blueBase.activeInHierarchy)
+        // 2. Если игрок не найден или далеко, а текущей цели нет — идем на базу
+        if (currentTarget == null || (currentTarget != playerObj.transform && currentTarget != defaultTarget))
         {
-            currentTarget = blueBase.transform;
+            currentTarget = defaultTarget;
         }
     }
 
     void AttackTarget()
     {
-        // Наносим урон игроку
         if (currentTarget.CompareTag("Player"))
         {
             PlayerHealth ph = currentTarget.GetComponent<PlayerHealth>();
             if (ph != null) ph.TakeDamage(attackDamage);
         }
-        // Наносим урон базе
         else if (currentTarget.CompareTag("BlueBase"))
         {
             BaseHealth bh = currentTarget.GetComponent<BaseHealth>();
@@ -83,13 +106,13 @@ public class CreepAI : MonoBehaviour
         }
     }
 
-    // Крип получает урон от игрока (вызовется из скрипта игрока)
     public void TakeDamage(float amount)
     {
         health -= amount;
         if (health <= 0)
         {
-            Destroy(gameObject); // Крип умирает
+            onCreepKilled?.Invoke();
+            Destroy(gameObject);
         }
     }
 }

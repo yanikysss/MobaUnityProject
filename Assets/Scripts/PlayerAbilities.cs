@@ -39,20 +39,17 @@ public class PlayerAbilities : MonoBehaviour
         HandleAbilities();
     }
 
-    // --- АТАКА (ЛКМ) ---
     private void HandleAttack()
     {
         if (Input.GetMouseButtonDown(0) && Time.time >= lastAttackTime + attackCooldown)
         {
             lastAttackTime = Time.time;
 
-            // Ищем всех в радиусе атаки
             Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
             bool hitSomething = false;
 
             foreach (var hitCollider in hitColliders)
             {
-                // 1. Проверяем, не крип ли это
                 CreepAI creep = hitCollider.GetComponent<CreepAI>();
                 if (creep != null)
                 {
@@ -63,11 +60,9 @@ public class PlayerAbilities : MonoBehaviour
                     creep.TakeDamage(attackDamage);
                     Debug.Log("Игрок ударил крипа!");
                     hitSomething = true;
-                    break; // Бьем только одного за клик
+                    break;
                 }
 
-                // 2. Проверяем, не красная ли это база
-                // Если у объекта есть тег RedBase и на нем висит скрипт BaseHealth
                 if (hitCollider.CompareTag("RedBase"))
                 {
                     BaseHealth baseHealth = hitCollider.GetComponent<BaseHealth>();
@@ -83,9 +78,6 @@ public class PlayerAbilities : MonoBehaviour
                         break;
                     }
                 }
-
-                // 3. Если это синяя база (тег BlueBase), мы ничего не делаем. 
-                // Она просто игнорируется, и урон по ней не проходит.
             }
 
             if (!hitSomething)
@@ -95,7 +87,6 @@ public class PlayerAbilities : MonoBehaviour
         }
     }
 
-    // --- СПОСОБНОСТИ (E и R) ---
     private void HandleAbilities()
     {
         if (Input.GetKeyDown(KeyCode.E))
