@@ -12,9 +12,10 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI redBaseText;
 
     [Header("End Game UI")]
-    public GameObject endGamePanel; // Сюда перетащим EndGamePanel
-    public TextMeshProUGUI endGameResultText; // Сюда перетащим ResultText
-    public TextMeshProUGUI endGameDeathsText; // Сюда перетащим DeathsText
+    public GameObject endGamePanel;          // Панель с результатом (скрыта в начале)
+    public TextMeshProUGUI endGameResultText; // Текст "ПОБЕДА" или "ПОРАЖЕНИЕ"
+    public TextMeshProUGUI endGameDeathsText; // Текст "Смертей: X"
+    public GameObject restartButton;          // Кнопка перезапуска (скрыта в начале)
 
     [Header("Scene References")]
     public PlayerHealth playerHealth;
@@ -30,6 +31,7 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        // Подписки на события
         if (playerHealth != null) playerHealth.onHealthChanged += UpdateUI;
         if (blueBase != null) blueBase.onHealthChanged += UpdateUI;
         if (redBase != null) redBase.onHealthChanged += UpdateUI;
@@ -39,8 +41,9 @@ public class UIManager : MonoBehaviour
         UpdateUI();
         UpdateKillsUI();
 
-        // Скрываем экран окончания игры при старте
+        // Скрываем экран окончания игры и кнопку при старте
         if (endGamePanel != null) endGamePanel.SetActive(false);
+        if (restartButton != null) restartButton.SetActive(false);
 
         InvokeRepeating(nameof(UpdateUI), 0.5f, 0.5f);
     }
@@ -52,7 +55,7 @@ public class UIManager : MonoBehaviour
 
     void UpdateUI()
     {
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return; // Если игра кончилась, не обновляем
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
 
         if (playerHealthText != null && playerHealth != null && playerHealth.gameObject.activeInHierarchy)
             playerHealthText.text = "HP: " + Mathf.RoundToInt(playerHealth.currentHealth);
@@ -76,7 +79,7 @@ public class UIManager : MonoBehaviour
             killsText.text = "Kills: " + killsCount;
     }
 
-    // Вызывается из GameManager
+    // Вызывается из GameManager при победе или поражении
     public void ShowGameOverScreen(bool isVictory)
     {
         if (endGamePanel != null)
@@ -101,6 +104,12 @@ public class UIManager : MonoBehaviour
             {
                 endGameDeathsText.text = "Смертей: " + PlayerHealth.deathsCount;
                 endGameDeathsText.color = Color.white;
+            }
+
+            // Показываем кнопку перезапуска
+            if (restartButton != null)
+            {
+                restartButton.SetActive(true);
             }
         }
     }
