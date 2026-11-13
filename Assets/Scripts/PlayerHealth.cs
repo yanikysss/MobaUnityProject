@@ -14,6 +14,9 @@ public class PlayerHealth : MonoBehaviour
     private bool isDead = false;
     private float respawnTimer = 0f;
 
+    // СТАТИЧЕСКИЙ СЧЕТЧИК СМЕРТЕЙ (доступен из любого скрипта)
+    public static int deathsCount = 0;
+
     private Rigidbody rb;
     private PlayerMovement movementScript;
     private PlayerAbilities abilitiesScript;
@@ -27,18 +30,13 @@ public class PlayerHealth : MonoBehaviour
         abilitiesScript = GetComponent<PlayerAbilities>();
         visuals = GetComponentsInChildren<MeshRenderer>();
 
-        // ЖЕСТКИЙ ПОИСК ТОЧКИ СПАВНА
+        // Жесткий поиск точки спавна, если не задана
         if (respawnPoint == null)
         {
             GameObject blueBase = GameObject.FindGameObjectWithTag("BlueBase");
             if (blueBase != null)
             {
                 respawnPoint = blueBase.transform;
-                Debug.Log("Точка спавна не задана вручную, найдена база по тегу: " + respawnPoint.name);
-            }
-            else
-            {
-                Debug.LogError("КРИТИЧЕСКАЯ ОШИБКА: Не найдена синяя база для спавна!");
             }
         }
     }
@@ -47,7 +45,8 @@ public class PlayerHealth : MonoBehaviour
     {
         if (isDead)
         {
-            respawnTimer -= Time.unscaledDeltaTime; // Используем unscaledDeltaTime, чтобы таймер шел даже если игра на паузе
+            // Используем unscaledDeltaTime, чтобы таймер тикал даже при остановке игры
+            respawnTimer -= Time.unscaledDeltaTime;
             if (respawnTimer <= 0)
             {
                 Respawn();
@@ -85,6 +84,9 @@ public class PlayerHealth : MonoBehaviour
         isDead = true;
         respawnTimer = respawnTime;
 
+        // Увеличиваем счетчик смертей
+        deathsCount++;
+
         if (movementScript != null) movementScript.enabled = false;
         if (abilitiesScript != null) abilitiesScript.enabled = false;
 
@@ -96,24 +98,19 @@ public class PlayerHealth : MonoBehaviour
 
         foreach (var mesh in visuals) mesh.enabled = false;
 
-        Debug.Log("Игрок умер.");
+        Debug.Log("Игрок умер. Всего смертей: " + deathsCount);
     }
 
     private void Respawn()
     {
         isDead = false;
 
-        // ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМ ВРЕМЯ (если кто-то его остановил)
+        // Принудительно возвращаем время в норму
         Time.timeScale = 1f;
 
         if (respawnPoint != null)
         {
             transform.position = respawnPoint.position;
-            Debug.Log("Игрок телепортирован на: " + respawnPoint.name);
-        }
-        else
-        {
-            Debug.LogWarning("Некуда телепортировать, respawnPoint пуст!");
         }
 
         currentHealth = maxHealth;
