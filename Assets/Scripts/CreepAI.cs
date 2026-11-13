@@ -10,19 +10,18 @@ public class CreepAI : MonoBehaviour
     public float health = 50f;
 
     [Header("Агр")]
-    public float aggroRange = 8f; // На каком расстоянии крип замечает игрока
-    public float deAggroRange = 12f; // На каком расстоянии крип забывает игрока
+    public float aggroRange = 8f;
+    public float deAggroRange = 12f;
 
     public static System.Action onCreepKilled;
 
     private Transform currentTarget;
-    private Transform defaultTarget; // Синяя база (цель по умолчанию)
+    private Transform defaultTarget; // Синяя база
     private float lastAttackTime = -10f;
     private float lastTargetSearchTime = 0f;
 
     void Start()
     {
-        // Находим синюю базу один раз при старте
         GameObject blueBase = GameObject.FindGameObjectWithTag("BlueBase");
         if (blueBase != null) defaultTarget = blueBase.transform;
     }
@@ -39,18 +38,15 @@ public class CreepAI : MonoBehaviour
         {
             float distanceToTarget = Vector3.Distance(transform.position, currentTarget.position);
 
-            // Если цель далеко — идем к ней
             if (distanceToTarget > attackRange)
             {
                 Vector3 direction = (currentTarget.position - transform.position).normalized;
                 direction.y = 0;
                 transform.position += direction * moveSpeed * Time.deltaTime;
 
-                // Поворот
                 if (direction != Vector3.zero)
                     transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 10f * Time.deltaTime);
             }
-            // Если цель близко — атакуем
             else
             {
                 if (Time.time >= lastAttackTime + attackCooldown)
@@ -65,9 +61,21 @@ public class CreepAI : MonoBehaviour
     void EvaluateTarget()
     {
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        bool playerIsValidTarget = false;
 
-        // 1. Проверяем игрока
+        // ПРОВЕРКА: Жив ли игрок?
         if (playerObj != null && playerObj.activeInHierarchy)
+        {
+            PlayerHealth ph = playerObj.GetComponent<PlayerHealth>();
+            // Если здоровье больше нуля, значит он жив и его можно бить
+            if (ph != null && ph.currentHealth > 0)
+            {
+                playerIsValidTarget = true;
+            }
+        }
+
+        // Если игрок валидная цель
+        if (playerIsValidTarget)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, playerObj.transform.position);
 
@@ -80,13 +88,21 @@ public class CreepAI : MonoBehaviour
             // Если мы уже бежим за игроком, но он убежал слишком далеко — сбрасываем агр
             else if (currentTarget == playerObj.transform && distanceToPlayer > deAggroRange)
             {
-                currentTarget = defaultTarget; // Переключаемся обратно на базу
+                currentTarget = defaultTarget;
                 return;
             }
         }
+        else
+        {
+            // Если игрок мертв, мы не должны на него агриться
+            if (currentTarget == playerObj?.transform)
+            {
+                currentTarget = defaultTarget;
+            }
+        }
 
-        // 2. Если игрок не найден или далеко, а текущей цели нет — идем на базу
-        if (currentTarget == null || (currentTarget != playerObj.transform && currentTarget != defaultTarget))
+        // Если цели нет, идем на базу
+        if (currentTarget == null)
         {
             currentTarget = defaultTarget;
         }
